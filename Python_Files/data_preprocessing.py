@@ -115,12 +115,18 @@ def preprocess_merged_data(merged_df):
 def sample_and_save_data(merged_df, output_file):
     sampled_df = merged_df.sample(frac=0.005)
     sampled_df.to_csv(output_file, index=False)
-
+# function that takes dataframe and makes non-numeric values into numeric unique numeric values
+def preprocess_data(data):
+    for col in data.columns:
+        if pd.api.types.is_string_dtype(data[col]):
+            data[col] = pd.Categorical(data[col]).codes
+    return data
 def main():
     merged_df = load_and_merge_data()
     preprocessed_df = preprocess_merged_data(merged_df)
+    preprocessed_df = preprocess_data(preprocessed_df)
     sample_and_save_data(preprocessed_df, 'data/Final_Data_Frame.csv')
-    print("Data preprocessing completed. Output saved to /mnt/data/Final_Data_Frame.csv")
+    print("Data preprocessing completed. Output saved to data/Final_Data_Frame.csv")
 
 if __name__ == "__main__":
     main()
