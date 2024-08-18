@@ -118,7 +118,10 @@ def preprocess_data(input_files, output_file):
 
     final_df = final_df.dropna(axis=1, how='any')
     final_df = final_df[(final_df['TDS'] >= 200) & (final_df['TDS'] <= 1000)]
-
+    #convert all non-numeric columns to numeric
+    for col in final_df.columns:
+        if not pd.api.types.is_numeric_dtype(final_df[col]):
+            final_df[col] = pd.to_numeric(final_df[col], errors='coerce')
     final_df.to_csv(output_file, index=False)
 
 files = {'df1':"Data/G3425.csv", 'df2':"Data/KHYI.csv", 'df3':"Data/Meadow Center Sensor Data Test.csv", 'df4':"Data/usgs.waterservices.csv"}
