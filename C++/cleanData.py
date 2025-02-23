@@ -1,36 +1,46 @@
+# Let's redo the data cleaning script properly and execute it step by step.
 import pandas as pd
 import numpy as np
 
-# Load data
-df = pd.read_csv('output_data.csv')
-
+# Load the provided dataset
+df = pd.read_csv('C++/output_data.csv')
+#Drop Station_ID
+df = df.drop('Station_ID', axis=1)
 # Drop columns with more than 75% NaN values
-df = df.loc[:, df.isnull().mean() < 0.75]
+threshold = len(df) * 0.75
+df = df.dropna(thresh=threshold, axis=1)
 
-# Convert numeric columns to numeric type and interpolate
-df_numeric = df.apply(pd.to_numeric, errors='coerce').interpolate(method='linear', limit_direction='both')
+# Separate numeric and non-numeric columns explicitly
+numeric_cols = df.select_dtypes(include=[np.number]).columns
+non_numeric_cols = df.select_dtypes(exclude=[np.number]).columns
 
-# Handle non-numeric columns with forward and backward fill
-df_non_numeric = df.select_dtypes(include=['object']).fillna(method='ffill').fillna(method='bfill')
+# Handle numeric columns: interpolate missing values
+df[numeric_cols] = df[numeric_cols].interpolate(method='linear', limit_direction='both')
 
-# Convert non-numeric columns to numeric by encoding
-df_encoded = pd.DataFrame()
-for col in df_non_numeric.columns:
-    df_encoded[col], _ = pd.factorize(df_non_numeric[col])
+# Handle non-numeric columns: fill NaN with forward-fill then backward-fill, then encode
+df[non_numeric_cols] = df[non_numeric_cols].fillna(method='ffill').fillna(method='bfill')
 
-# Combine numeric and encoded non-numeric data
-df_clean = pd.concat([df_numeric, df_encoded], axis=1)
+# Encode non-numeric columns numerically
+for col in non_numeric_cols:
+    df[col], _ = pd.factorize(df[col])
 
-# Final check for NaN values
-remaining_nans = df_clean.isnull().sum().sum()
+# Check for any remaining NaN values and drop rows with NaNs if necessary (max 10% drop allowed)
+remaining_nans = df.isnull().sum().sum()
+rows_before = len(df)
 if remaining_nans > 0:
-    original_rows = len(df_clean)
-    df_clean.dropna(inplace=True)
-    dropped_percentage = (1 - len(df_clean) / original_rows) * 100
-    print(f"{dropped_percentage:.2f}% of data was dropped due to remaining NaN values.")
+    df.dropna(inplace=True)
+    rows_after = len(df)
+    dropped_percentage = (rows_before - rows_after) / rows_before * 100
+    if dropped_percentage > 10:
+        print(f"Warning: {dropped_percentage:.2f}% of data would be dropped, exceeding your 10% threshold.")
+    else:
+        print(f"{dropped_percentage:.2f}% of data was dropped due to remaining NaN values.")
 else:
     print("No NaN values remain after cleaning.")
 
-# Export cleaned CSV
-df_clean.to_csv('cleaned_output_data.csv', index=False)
-print("Cleaned data saved to cleaned_output_data.csv.")
+# Save the cleaned dataset
+cleaned_csv_path = 'C++/cleaned_output_data.csv'
+df.to_csv(cleaned_csv_path, index=False)
+
+# Display basic info of cleaned data
+df.info(), cleaned_csv_path
