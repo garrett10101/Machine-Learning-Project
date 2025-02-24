@@ -1,0 +1,4 @@
+1. main.exe hangs when executing
+2. REDO the DT and DTR implementations
+3. Create a generic ML abtract class as a framework for other models
+4. create a simple main.cpp function for AWS Lambda test
