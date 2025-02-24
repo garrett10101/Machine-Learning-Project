@@ -25,8 +25,8 @@ public:
     std::vector<T> predict(const std::vector<std::vector<T>>& data) override;
 
 private:
-    Node<T>* treeRoot;  // Added missing member variable
-    T predictSingle(Node<T>* node, const std::vector<T>& x); // Private helper function
+    Node<T>* treeRoot;
+    T predictSingle(Node<T>* node, const std::vector<T>& x);
 };
 
 #endif

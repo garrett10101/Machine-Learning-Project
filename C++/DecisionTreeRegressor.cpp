@@ -4,27 +4,17 @@
 #include <cmath>
 #include <numeric>
 
-#define MSE_TARGET 0.01
-
+// Constructor
 template <typename T>
 DecisionTreeRegressor<T>::DecisionTreeRegressor() : treeRoot(nullptr) {}
 
+// Destructor
 template <typename T>
 DecisionTreeRegressor<T>::~DecisionTreeRegressor() {
-    delete treeRoot;  // clean up allocated memory
+    delete treeRoot;
 }
 
-// Helper function to calculate mean squared error
-template <typename T>
-double calcMSE(const std::vector<T>& actual, const std::vector<T>& predicted) {
-    double mse = 0.0;
-    for (size_t i = 0; i < actual.size(); ++i) {
-        mse += pow(actual[i] - predicted[i], 2);
-    }
-    return mse / actual.size();
-}
-
-// Recursive tree building implementation
+// Recursive tree building
 template <typename T>
 void buildTree(Node<T>*& node, const std::vector<std::vector<T>>& X, const std::vector<T>& y,
                int depth, int max_depth, int min_samples_split) {
@@ -96,42 +86,16 @@ void buildTree(Node<T>*& node, const std::vector<std::vector<T>>& X, const std::
     buildTree(node->right, right_X, right_y, depth + 1, max_depth, min_samples_split);
 }
 
+// Fit method
 template <typename T>
 void DecisionTreeRegressor<T>::fit(int max_depth, int min_samples_split) {
     if (treeRoot) delete treeRoot;
 
-    double mse;
-    int current_depth = max_depth;
-
-    do {
-        treeRoot = new Node<T>();
-        buildTree(treeRoot, this->X_train, this->y_train, 0, current_depth, min_samples_split);
-        auto preds = predict(this->X_test);
-        mse = calcMSE(this->y_test, preds);
-
-        std::cout << "Current MSE: " << mse << " | Target MSE: " << MSE_TARGET << std::endl;
-
-        if (mse <= MSE_TARGET)
-            break;
-
-        current_depth++;
-
-    } while (mse > MSE_TARGET && current_depth <= 20);
-
-    std::cout << "Final MSE: " << mse << std::endl;
+    treeRoot = new Node<T>();
+    buildTree(treeRoot, this->X_train, this->y_train, 0, max_depth, min_samples_split);
 }
 
-template <typename T>
-T DecisionTreeRegressor<T>::predictSingle(Node<T>* node, const std::vector<T>& x) {
-    if (node->isLeaf)
-        return node->prediction;
-
-    if (x[node->featureIndex] <= node->splitValue)
-        return predictSingle(node->left, x);
-    else
-        return predictSingle(node->right, x);
-}
-
+// Predict method
 template <typename T>
 std::vector<T> DecisionTreeRegressor<T>::predict(const std::vector<std::vector<T>>& data) {
     std::vector<T> predictions;
